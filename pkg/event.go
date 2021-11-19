@@ -1,6 +1,8 @@
-package states
+package main
 
-import "time"
+import (
+	"time"
+)
 
 type empty struct{}
 type t interface{}
@@ -32,8 +34,8 @@ type EventHandler interface {
 type FiniteStateMachine interface {
 	CurrentState() State
 	InitialState() State
-	FinalState() State
-	State() State
+	FinalStates() set
+	States() set
 	Transitions() set
 	LastEvent() Event
 	LastTransition() Transition

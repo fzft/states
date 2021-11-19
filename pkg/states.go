@@ -1,4 +1,4 @@
-package states
+package main
 
 type State struct {
 	name string
