@@ -6,18 +6,18 @@ import (
 
 type empty struct{}
 type t interface{}
-type set map[t]empty
+type Set map[t]empty
 
-func (s set) has(item t) bool {
+func (s Set) Has(item t) bool {
 	_, exists := s[item]
 	return exists
 }
 
-func (s set) insert(item t) {
+func (s Set) Insert(item t) {
 	s[item] = empty{}
 }
 
-func (s set) delete(item t) {
+func (s Set) Delete(item t) {
 	delete(s, item)
 }
 
@@ -34,9 +34,9 @@ type EventHandler interface {
 type FiniteStateMachine interface {
 	CurrentState() State
 	InitialState() State
-	FinalStates() set
-	States() set
-	Transitions() set
+	FinalStates() Set
+	States() Set
+	Transitions() Set
 	LastEvent() Event
 	LastTransition() Transition
 	Fire(e Event) (State, error)

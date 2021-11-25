@@ -26,10 +26,10 @@ func (v *TransitionDefinitionValidator) validateTransitionDefinition(t Transitio
 	srcState := t.SourceState()
 	tState := t.TargetState()
 
-	if !m.States().has(srcState) {
+	if !m.States().Has(srcState) {
 		return errors.New(fmt.Sprintf("Source state %s is not registered in FSM states for transition %s", srcState.Name(), tn))
 	}
-	if !m.States().has(tState) {
+	if !m.States().Has(tState) {
 		return errors.New(fmt.Sprintf("target state %s is not registered in FSM states for transition %s", srcState.Name(), tn))
 	}
 	return nil

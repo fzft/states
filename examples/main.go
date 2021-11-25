@@ -2,11 +2,11 @@ package main
 
 import (
 	"fmt"
+	"github.com/fzft/states"
 	"os"
 	"reflect"
 	"strings"
 	"time"
-	"github.com/fzft/states"
 )
 
 type PushEvent struct {
@@ -14,7 +14,7 @@ type PushEvent struct {
 	timestamp int64
 }
 
-func NewPushEvent() Event {
+func NewPushEvent() states.Event {
 	return &PushEvent{
 		name:      "PushEvent",
 		timestamp: time.Now().Unix(),
@@ -33,7 +33,7 @@ type CoinEvent struct {
 	timestamp int64
 }
 
-func NewCoinEvent() Event {
+func NewCoinEvent() states.Event {
 	return &CoinEvent{
 		name:      "CoinEvent",
 		timestamp: time.Now().Unix(),
@@ -55,7 +55,7 @@ func NewLock() *Lock {
 	return &Lock{}
 }
 
-func (l *Lock) HandleEvent(event Event) error {
+func (l *Lock) HandleEvent(event states.Event) error {
 	fmt.Printf("Notified about event %s triggered at %d\n", event.Name(), event.Timestamp())
 	fmt.Println("Locking turnstile..")
 	return nil
@@ -69,7 +69,7 @@ func NewUnLock() *UnLock {
 	return &UnLock{}
 }
 
-func (l *UnLock) HandleEvent(event Event) error {
+func (l *UnLock) HandleEvent(event states.Event) error {
 	fmt.Printf("Notified about event %s triggered at %d\n", event.Name(), event.Timestamp())
 	fmt.Println("Unlocking turnstile..")
 	return nil
@@ -78,17 +78,17 @@ func (l *UnLock) HandleEvent(event Event) error {
 func main() {
 
 	// 1. define states
-	locked := NewState("locked")
-	unlocked := NewState("unlocked")
+	locked := states.NewState("locked")
+	unlocked := states.NewState("unlocked")
 
-	states := set{}
-	states.insert(locked)
-	states.insert(unlocked)
+	s := states.Set{}
+	s.Insert(locked)
+	s.Insert(unlocked)
 
 	// 2. define events
 
 	// 3. transitions
-	unlock := NewTransitionBuilder().
+	unlock := states.NewTransitionBuilder().
 		Name("unlock").
 		SourceState(locked).
 		EventType(reflect.TypeOf(NewCoinEvent())).
@@ -96,14 +96,14 @@ func main() {
 		TargetState(unlocked).
 		Build()
 
-	pushLocked := NewTransitionBuilder().
+	pushLocked := states.NewTransitionBuilder().
 		Name("pushLocked").
 		SourceState(locked).
 		EventType(reflect.TypeOf(NewPushEvent())).
 		TargetState(locked).
 		Build()
 
-	lock := NewTransitionBuilder().
+	lock := states.NewTransitionBuilder().
 		Name("lock").
 		SourceState(unlocked).
 		EventType(reflect.TypeOf(NewPushEvent())).
@@ -111,7 +111,7 @@ func main() {
 		TargetState(locked).
 		Build()
 
-	coinUnlocked := NewTransitionBuilder().
+	coinUnlocked := states.NewTransitionBuilder().
 		Name("coinUnlocked").
 		SourceState(unlocked).
 		EventType(reflect.TypeOf(NewCoinEvent())).
@@ -119,12 +119,12 @@ func main() {
 		Build()
 
 	// 4. build FSM instance
-	turnstileStateMachine := NewFiniteStateMachineBuilder(states, locked).
-		registerTransitions(lock).
-		registerTransitions(pushLocked).
-		registerTransitions(unlock).
-		registerTransitions(coinUnlocked).
-		build()
+	turnstileStateMachine := states.NewFiniteStateMachineBuilder(s, locked).
+		RegisterTransitions(lock).
+		RegisterTransitions(pushLocked).
+		RegisterTransitions(unlock).
+		RegisterTransitions(coinUnlocked).
+		Build()
 
 	fmt.Printf("Turnstile initial state : %s\n", turnstileStateMachine.CurrentState().Name())
 

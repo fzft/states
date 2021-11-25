@@ -15,7 +15,7 @@ type FiniteStateMachineBuilder struct {
 	tdv *TransitionDefinitionValidator
 }
 
-func NewFiniteStateMachineBuilder(states set, initialState State) *FiniteStateMachineBuilder {
+func NewFiniteStateMachineBuilder(states Set, initialState State) *FiniteStateMachineBuilder {
 	return &FiniteStateMachineBuilder{
 		fsm: NewFiniteStateMachineImpl(states, initialState),
 		mdv: NewMDV(),
@@ -23,7 +23,7 @@ func NewFiniteStateMachineBuilder(states set, initialState State) *FiniteStateMa
 	}
 }
 
-func (b *FiniteStateMachineBuilder) registerTransitions(ts ...Transition) *FiniteStateMachineBuilder {
+func (b *FiniteStateMachineBuilder) RegisterTransitions(ts ...Transition) *FiniteStateMachineBuilder {
 	group := new(errgroup.Group)
 	for _, t := range ts {
 		tv := t
@@ -44,7 +44,7 @@ func (b *FiniteStateMachineBuilder) registerFinalStates(states ...State) *Finite
 	return b
 }
 
-func (b *FiniteStateMachineBuilder) build() FiniteStateMachine {
+func (b *FiniteStateMachineBuilder) Build() FiniteStateMachine {
 	b.mdv.validateFiniteStateMachineDefinition(b.fsm)
 	return b.fsm
 }
@@ -53,32 +53,32 @@ type FiniteStateMachineImpl struct {
 	mu             sync.Mutex
 	currentState   State
 	initialState   State
-	finalStates    set
-	states         set
-	transitions    set
+	finalStates    Set
+	states         Set
+	transitions    Set
 	lastEvent      Event
 	lastTransition Transition
 }
 
-func NewFiniteStateMachineImpl(states set, initialState State) *FiniteStateMachineImpl {
+func NewFiniteStateMachineImpl(states Set, initialState State) *FiniteStateMachineImpl {
 	return &FiniteStateMachineImpl{
 		states:       states,
 		initialState: initialState,
 		currentState: initialState,
-		transitions:  set{},
-		finalStates:  set{},
+		transitions:  Set{},
+		finalStates:  Set{},
 	}
 }
 
 func (m *FiniteStateMachineImpl) RegisterTransition(ts ...Transition) {
 	for _, t := range ts {
-		m.transitions.insert(t)
+		m.transitions.Insert(t)
 	}
 }
 
 func (m *FiniteStateMachineImpl) RegisterFinalState(states ...State) {
 	for _, s := range states {
-		m.finalStates.insert(s)
+		m.finalStates.Insert(s)
 	}
 }
 
@@ -87,12 +87,12 @@ func (m *FiniteStateMachineImpl) Fire(event Event) (State, error) {
 	defer recoverPanic()
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	if len(m.finalStates) == 0 && m.finalStates.has(m.currentState) {
+	if len(m.finalStates) == 0 && m.finalStates.Has(m.currentState) {
 		return m.currentState, nil
 	}
 	for t, _ := range m.transitions {
 		if tv, ok := t.(Transition); ok {
-			if m.currentState.Equals(tv.SourceState()) && tv.EventType() == reflect.TypeOf(event) && m.states.has(tv.TargetState()) {
+			if m.currentState.Equals(tv.SourceState()) && tv.EventType() == reflect.TypeOf(event) && m.states.Has(tv.TargetState()) {
 				if tv.EventHandler() != nil {
 					tv.EventHandler().HandleEvent(event)
 				}
@@ -118,17 +118,17 @@ func (m *FiniteStateMachineImpl) InitialState() State {
 }
 
 //FinalStates ...
-func (m *FiniteStateMachineImpl) FinalStates() set {
+func (m *FiniteStateMachineImpl) FinalStates() Set {
 	return m.finalStates
 }
 
 //States ...
-func (m *FiniteStateMachineImpl) States() set {
+func (m *FiniteStateMachineImpl) States() Set {
 	return m.states
 }
 
 //Transitions ...
-func (m *FiniteStateMachineImpl) Transitions() set {
+func (m *FiniteStateMachineImpl) Transitions() Set {
 	return m.transitions
 }
 
@@ -153,12 +153,12 @@ func (v *FiniteStateMachineDefinitionValidator) validateFiniteStateMachineDefini
 	states := m.States()
 
 	initialState := m.InitialState()
-	if !states.has(initialState) {
+	if !states.Has(initialState) {
 		return errors.New(fmt.Sprintf("Initial state %s must belong to FSM states: %s",
 			initialState.Name(), dumpFSMStates(states)))
 	}
 	for s, _ := range m.FinalStates() {
-		if !states.has(s) {
+		if !states.Has(s) {
 			return errors.New(fmt.Sprintf("Final state %s must belong to FSM states: %s",
 				initialState.Name(), dumpFSMStates(states)))
 		}
@@ -176,7 +176,7 @@ func recoverPanic() {
 	}
 }
 
-func dumpFSMStates(states set) string {
+func dumpFSMStates(states Set) string {
 	var b strings.Builder
 	for s, _ := range states {
 		if sv, ok := s.(State); ok {
